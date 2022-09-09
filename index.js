@@ -32,6 +32,9 @@ function whatAreWeDoing() {
             case 'View All Employees':
                 viewAllEmployees();
                 break;
+            case 'Add Employee':
+                addEmployee();
+                break;
             case 'View All Roles':
                 viewAllRoles();
                 break;
@@ -47,6 +50,55 @@ function whatAreWeDoing() {
         }
     })
     .catch(error => console.log(error));
+}
+
+function addEmployee() {
+    let roles = [];
+    db.query(`SELECT title FROM role`, function (err, results) {
+        for(let i = 0; i < results.length; i++){
+            roles.push(results[i].title);
+        }
+    })
+
+    let employees = [];
+    db.query(`SELECT concat(first_name, ' ', last_name) AS manager FROM employee`, function (err, results) {
+        for(let i = 0; i < results.length; i++){
+            employees.push(results[i].manager);
+        }
+    })
+
+    inquirer
+        .prompt([
+            {
+                type: 'input',
+                message: 'What is the employee\'s first name?',
+                name: 'fName'
+            },
+            {
+                type: 'input',
+                message: 'What is the employee\'s last name?',
+                name: 'lName'
+            },
+            {
+                type: 'list',
+                message: 'What is the employee\'s role?',
+                name: 'role',
+                choices: roles
+            },
+            {
+                type: 'list',
+                message: 'Who is the employee\'s manager?',
+                name: 'manager',
+                choices: employees
+            }
+        ])
+        .then(res => {
+            db.promise().query(`INSERT INTO employee (first_name, last_name, role_id, manager_id)
+            VALUES ('${res.fName}', '${res.lName}', ${roles.indexOf(res.role)+1}, ${employees.indexOf(res.manager)+1});`)
+                .then(() => {
+                    whatAreWeDoing();
+                })
+        })
 }
 
 function addRole() {
