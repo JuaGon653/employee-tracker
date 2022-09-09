@@ -76,8 +76,9 @@ function addRole() {
             }
         ])
         .then(res => {
-            let index = names.indexOf(res.department);
-            db.promise().query(``)
+            let index = names.indexOf(res.department) + 1;
+            db.promise().query(`INSERT INTO role (title, salary, department_id)
+            VALUES ('${res.role}', ${res.salary}, ${index})`)
                 .then(() => {
                     whatAreWeDoing();
                 })
@@ -111,7 +112,7 @@ function viewAllDepartments() {
 
 function viewAllRoles() {
     db.query(`SELECT role.id, title, name AS department, salary FROM role 
-    JOIN department ON role.department_id = department.id`, function(err, results) {
+    JOIN department ON role.department_id = department.id ORDER BY id`, function(err, results) {
         console.table(results);
         whatAreWeDoing();
     })
