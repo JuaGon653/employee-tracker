@@ -1,7 +1,6 @@
 const inquirer = require('inquirer');
 const mysql = require('mysql2');
 const cTable = require('console.table');
-const { toNamespacedPath } = require('path');
 
 const db = mysql.createConnection(
     {
@@ -35,6 +34,9 @@ function whatAreWeDoing() {
             case 'Add Employee':
                 addEmployee();
                 break;
+            case 'Update Employee Role':
+                updateEmpRole();
+                break;
             case 'View All Roles':
                 viewAllRoles();
                 break;
@@ -50,6 +52,50 @@ function whatAreWeDoing() {
         }
     })
     .catch(error => console.log(error));
+}
+
+function updateEmpRole() {
+    let employees = [];
+    db.query(`SELECT concat(first_name, ' ', last_name) AS name FROM employee`, function (err, results) {
+        for(let name of results){
+            employees.push(name.name);
+        }
+        inquirer
+            .prompt([
+                {
+                    type: 'list',
+                    message: 'Which employee\'s role do you want to update?',
+                    name: 'name',
+                    choices: employees
+                }
+            ])
+            .then(firstRes => {
+                let roles = [];
+                db.query(`SELECT title FROM role`, function (err, results) {
+                    for(let role of results) {
+                        roles.push(role.title);
+                    }
+                    inquirer
+                    .prompt([
+                        {
+                            type: 'list',
+                            message: 'What role do you want to assign to the selected employee?',
+                            name: 'role',
+                            choices: roles
+                        }
+                    ])
+                    .then(res => {
+                        console.log(`UPDATE employee SET role_id = ${roles.indexOf(res.role)+1} WHERE id=${employees.indexOf(firstRes.name)+1}`)
+                        db.promise().query(`UPDATE employee SET role_id = ${roles.indexOf(res.role)+1} WHERE id=${employees.indexOf(firstRes.name)+1}`)
+                        .then(() => whatAreWeDoing())
+                    })
+                })
+            })
+    })
+
+    
+
+    
 }
 
 function addEmployee() {
@@ -94,7 +140,7 @@ function addEmployee() {
         ])
         .then(res => {
             db.promise().query(`INSERT INTO employee (first_name, last_name, role_id, manager_id)
-            VALUES ('${res.fName}', '${res.lName}', ${roles.indexOf(res.role)+1}, ${employees.indexOf(res.manager)+1});`)
+            VALUES ('${res.fName}', '${res.lName}', ${roles.indexOf(res.role)+1}, ${employees.indexOf(res.manager)+1})`)
                 .then(() => {
                     whatAreWeDoing();
                 })
