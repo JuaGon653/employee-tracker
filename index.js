@@ -49,6 +49,9 @@ function whatAreWeDoing() {
             case 'Add Department':
                 addDepartment();
                 break;
+            default:
+                console.log('Bye Bye!');
+                process.exit();
         }
     })
     .catch(error => console.log(error));
