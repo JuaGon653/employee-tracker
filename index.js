@@ -2,6 +2,7 @@ const inquirer = require('inquirer');
 const mysql = require('mysql2');
 const cTable = require('console.table');
 
+// connecting to the database
 const db = mysql.createConnection(
     {
         host: 'localhost',
@@ -9,12 +10,15 @@ const db = mysql.createConnection(
         password: 'wheresthechapstick',
         database: 'some_store_db'
     },
-    console.log('Connected to the some_store_db database.')
+    console.log('Connected to some_store_db database.')
 );
+
+// starts off running the 'whatAreWeDoing' function
 whatAreWeDoing();
 
-
+// 
 function whatAreWeDoing() {
+    // gives list of options
     inquirer
     .prompt([
         {
@@ -27,6 +31,7 @@ function whatAreWeDoing() {
         }
     ])
     .then(response => {
+        // calls necessary functions based off answer
         switch (response.whatimdoing) {
             case 'View All Employees':
                 viewAllEmployees();
@@ -35,7 +40,7 @@ function whatAreWeDoing() {
                 addEmployee();
                 break;
             case 'Update Employee Role':
-                updateEmpRole();
+                updateRole();
                 break;
             case 'View All Roles':
                 viewAllRoles();
@@ -50,13 +55,16 @@ function whatAreWeDoing() {
                 addDepartment();
                 break;
             default:
+                
                 console.log('Bye Bye!');
+                // if 'Quit' is pressed it will instruct Node.js to terminate the process
                 process.exit();
         }
     })
     .catch(error => console.log(error));
 }
 
+// working update employee role function
 function updateEmpRole() {
     let employees = [];
     db.query(`SELECT concat(first_name, ' ', last_name) AS name FROM employee`, function (err, results) {
@@ -101,7 +109,49 @@ function updateEmpRole() {
     
 }
 
+// unworking update employee role function
+async function updateRole() {
+    let emps = ['null'];
+    let dd = db.query(`SELECT concat(first_name, ' ', last_name) AS name FROM employee`, function (err, results) {
+        for(let i = 0; i < results.length; i++){
+            emps.push(results[i].name);
+        };
+        return emps;
+    });
+    let roles = [];
+    let ss = db.query(`SELECT title FROM role`, async function (err, results) {
+        for(let i = 0; i < results.length; i++) {
+            roles.push(await results[i].title);
+        };
+        return roles;
+    });
+    console.log(dd);
+    console.log(ss);
+
+    inquirer.prompt([
+        {
+            type: 'list',
+            message: "Which employee's role do you want to update?",
+            name: 'emp',
+            choices: dd
+        },
+        {
+            type: 'list',
+            message: "What role do you want to assign to the selected employee?",
+            name: 'role',
+            choices: roles
+        }
+    ])
+    .then(res => {
+        console.log(`UPDATE employee SET role_id = ${roles.indexOf(res.role)+1} WHERE id=${employees.indexOf(firstRes.name)+1}`)
+        db.promise().query(`UPDATE employee SET role_id = ${roles.indexOf(res.role)+1} WHERE id=${emps.indexOf(res.emp)+1}`)
+        .then(() => whatAreWeDoing())
+    })
+}
+
+// adds employee to 'employee' table in database using the user's answers
 function addEmployee() {
+    // grabs the role title from the database and adds them to the 'roles' array
     let roles = [];
     db.query(`SELECT title FROM role`, function (err, results) {
         for(let i = 0; i < results.length; i++){
@@ -109,6 +159,7 @@ function addEmployee() {
         }
     })
 
+    // grabs the manager name from the database and adds them to the 'employee' array
     let employees = [];
     db.query(`SELECT concat(first_name, ' ', last_name) AS manager FROM employee`, function (err, results) {
         for(let i = 0; i < results.length; i++){
@@ -116,6 +167,7 @@ function addEmployee() {
         }
     })
 
+    // prompting user for employee info
     inquirer
         .prompt([
             {
@@ -142,21 +194,27 @@ function addEmployee() {
             }
         ])
         .then(res => {
+            // adds employee to 'employee' table in the database using the user's prompt values
             db.promise().query(`INSERT INTO employee (first_name, last_name, role_id, manager_id)
             VALUES ('${res.fName}', '${res.lName}', ${roles.indexOf(res.role)+1}, ${employees.indexOf(res.manager)+1})`)
                 .then(() => {
+                    // whatAreWeDoing is always called at the end of a function
                     whatAreWeDoing();
                 })
         })
 }
 
+// adds role to 'role' table in database using the user's answers
 function addRole() {
+    // grabs role name from database and pushes it into 'names' array
     let names = [];
     db.query(`SELECT * FROM department`, function (err, results) {
         for(let i = 0; i < results.length; i++){
             names.push(results[i].name);
         }
     })
+
+    // prompts user for role info
     inquirer
         .prompt([
             {
@@ -177,7 +235,8 @@ function addRole() {
             }
         ])
         .then(res => {
-            let index = names.indexOf(res.department) + 1;
+            let index = names.indexOf(res.department) + 1; // index number the department would be in, in the database table
+            // adds role to 'role' table using the user's prompt values
             db.promise().query(`INSERT INTO role (title, salary, department_id)
             VALUES ('${res.role}', ${res.salary}, ${index})`)
                 .then(() => {
@@ -186,7 +245,9 @@ function addRole() {
         })
 }
 
+// adds department to 'department' table in database using the user's answers
 function addDepartment() {
+    // prompts user for the department's name
     inquirer
         .prompt([
             {
@@ -196,6 +257,7 @@ function addDepartment() {
             }
         ])
         .then(res => 
+            // adds department to 'department' table using the user's prompt values
             db.promise().query(`INSERT INTO department (name)
             VALUES ('${res.department}')`)
                 .then(() => {
@@ -204,14 +266,18 @@ function addDepartment() {
         )
 }
 
+// displays the Department table
 function viewAllDepartments() {
+    // grabs all the department's table info 
     db.query(`SELECT * FROM department`, function (err, results) {
         console.table(results);
         whatAreWeDoing();
     })
 }
 
+// displays the Role table
 function viewAllRoles() {
+    // grabs the roles table info, also joining the table with the department table
     db.query(`SELECT role.id, title, name AS department, salary FROM role 
     JOIN department ON role.department_id = department.id ORDER BY id`, function(err, results) {
         console.table(results);
@@ -219,7 +285,9 @@ function viewAllRoles() {
     })
 }
 
+// displays the Employee table
 function viewAllEmployees() {
+    // grabs the employees table info, joining it with both the role and department tables
     db.query(`SELECT A.id, A.first_name, A.last_name, title, name AS department, salary, IF(A.manager_id IS NULL, 'null', concat(B.first_name, ' ', B.last_name)) AS manager from employee A 
     join employee B  
     on A.manager_id = B.id
