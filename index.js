@@ -160,7 +160,7 @@ function addEmployee() {
     })
 
     // grabs the manager name from the database and adds them to the 'employee' array
-    let employees = [];
+    let employees = ['None'];
     db.query(`SELECT concat(first_name, ' ', last_name) AS manager FROM employee`, function (err, results) {
         for(let i = 0; i < results.length; i++){
             employees.push(results[i].manager);
@@ -194,9 +194,13 @@ function addEmployee() {
             }
         ])
         .then(res => {
+            let bool;
+            if(res.manager == 'None') {
+                bool = true;
+            }
             // adds employee to 'employee' table in the database using the user's prompt values
             db.promise().query(`INSERT INTO employee (first_name, last_name, role_id, manager_id)
-            VALUES ('${res.fName}', '${res.lName}', ${roles.indexOf(res.role)+1}, ${employees.indexOf(res.manager)+1})`)
+            VALUES ('${res.fName}', '${res.lName}', ${roles.indexOf(res.role)+1}, ${bool ? null: res.manager})`)
                 .then(() => {
                     // whatAreWeDoing is always called at the end of a function
                     whatAreWeDoing();
