@@ -12,7 +12,6 @@ const db = mysql.createConnection(
     },
     console.log('Connected to some_store_db database.')
 );
-
 // starts off running the 'whatAreWeDoing' function
 whatAreWeDoing();
 
@@ -40,7 +39,7 @@ function whatAreWeDoing() {
                 addEmployee();
                 break;
             case 'Update Employee Role':
-                updateRole();
+                updateEmpRole();
                 break;
             case 'View All Roles':
                 viewAllRoles();
@@ -65,14 +64,18 @@ function whatAreWeDoing() {
 }
 
 // working update employee role function
+// unworking update employee function is at the bottom that for some reason wasn't working with 
+// the format I was using for all the other functions
 function updateEmpRole() {
     let employees = [];
     db.query(`SELECT concat(first_name, ' ', last_name) AS name FROM employee`, function (err, results) {
+        // pushes names of employees to the 'employees' array
         for(let name of results){
             employees.push(name.name);
         }
         inquirer
             .prompt([
+                // prompts for what employee to update using the values in 'employees' array
                 {
                     type: 'list',
                     message: 'Which employee\'s role do you want to update?',
@@ -80,14 +83,16 @@ function updateEmpRole() {
                     choices: employees
                 }
             ])
-            .then(firstRes => {
+            .then(firstRes => { // firstRes holds the employee answer
                 let roles = [];
                 db.query(`SELECT title FROM role`, function (err, results) {
+                    // pushes already made roles into 'roles' array
                     for(let role of results) {
                         roles.push(role.title);
                     }
                     inquirer
                     .prompt([
+                        // prompts for what new role to assign to the chosen employee
                         {
                             type: 'list',
                             message: 'What role do you want to assign to the selected employee?',
@@ -95,8 +100,7 @@ function updateEmpRole() {
                             choices: roles
                         }
                     ])
-                    .then(res => {
-                        console.log(`UPDATE employee SET role_id = ${roles.indexOf(res.role)+1} WHERE id=${employees.indexOf(firstRes.name)+1}`)
+                    .then(res => { // res contains the chosen role
                         db.promise().query(`UPDATE employee SET role_id = ${roles.indexOf(res.role)+1} WHERE id=${employees.indexOf(firstRes.name)+1}`)
                         .then(() => whatAreWeDoing())
                     })
@@ -109,45 +113,7 @@ function updateEmpRole() {
     
 }
 
-// unworking update employee role function
-async function updateRole() {
-    let emps = ['null'];
-    let dd = db.query(`SELECT concat(first_name, ' ', last_name) AS name FROM employee`, function (err, results) {
-        for(let i = 0; i < results.length; i++){
-            emps.push(results[i].name);
-        };
-        return emps;
-    });
-    let roles = [];
-    let ss = db.query(`SELECT title FROM role`, async function (err, results) {
-        for(let i = 0; i < results.length; i++) {
-            roles.push(await results[i].title);
-        };
-        return roles;
-    });
-    console.log(dd);
-    console.log(ss);
-
-    inquirer.prompt([
-        {
-            type: 'list',
-            message: "Which employee's role do you want to update?",
-            name: 'emp',
-            choices: dd
-        },
-        {
-            type: 'list',
-            message: "What role do you want to assign to the selected employee?",
-            name: 'role',
-            choices: roles
-        }
-    ])
-    .then(res => {
-        console.log(`UPDATE employee SET role_id = ${roles.indexOf(res.role)+1} WHERE id=${employees.indexOf(firstRes.name)+1}`)
-        db.promise().query(`UPDATE employee SET role_id = ${roles.indexOf(res.role)+1} WHERE id=${emps.indexOf(res.emp)+1}`)
-        .then(() => whatAreWeDoing())
-    })
-}
+// ADDING FUNCTIONS
 
 // adds employee to 'employee' table in database using the user's answers
 function addEmployee() {
@@ -194,13 +160,9 @@ function addEmployee() {
             }
         ])
         .then(res => {
-            let bool;
-            if(res.manager == 'None') {
-                bool = true;
-            }
             // adds employee to 'employee' table in the database using the user's prompt values
             db.promise().query(`INSERT INTO employee (first_name, last_name, role_id, manager_id)
-            VALUES ('${res.fName}', '${res.lName}', ${roles.indexOf(res.role)+1}, ${bool ? null: res.manager})`)
+            VALUES ('${res.fName}', '${res.lName}', ${roles.indexOf(res.role)+1}, ${(res.manager == 'None') ? null : employees.indexOf(res.manager)})`)
                 .then(() => {
                     // whatAreWeDoing is always called at the end of a function
                     whatAreWeDoing();
@@ -270,6 +232,8 @@ function addDepartment() {
         )
 }
 
+// VIEWING FUNCTIONS
+
 // displays the Department table
 function viewAllDepartments() {
     // grabs all the department's table info 
@@ -302,5 +266,43 @@ function viewAllEmployees() {
     order by id`, function (err, results) {
         console.table(results);
         whatAreWeDoing();
+    })
+}
+
+
+// unworking update employee role function
+// same format as the other functions but for some reason doesn't work
+function updateRole() {
+    let emps = [];
+    db.query(`SELECT concat(first_name, ' ', last_name) AS name FROM employee`, function (err, results) {
+        for(let i = 0; i < results.length; i++){
+            emps.push(results[i].name);
+        };
+    });
+    let roles = [];
+    db.query(`SELECT title FROM role`, async function (err, results) {
+        for(let i = 0; i < results.length; i++) {
+            roles.push(results[i].title);
+        };
+    });
+
+    inquirer.prompt([
+        {
+            type: 'list',
+            message: "Which employee's role do you want to update?",
+            name: 'emp',
+            choices: emps
+        },
+        {
+            type: 'list',
+            message: "What role do you want to assign to the selected employee?",
+            name: 'role',
+            choices: roles
+        }
+    ])
+    .then(res => {
+        console.log(`UPDATE employee SET role_id = ${roles.indexOf(res.role)+1} WHERE id=${employees.indexOf(firstRes.name)+1}`)
+        db.promise().query(`UPDATE employee SET role_id = ${roles.indexOf(res.role)+1} WHERE id=${emps.indexOf(res.emp)+1}`)
+        .then(() => whatAreWeDoing())
     })
 }

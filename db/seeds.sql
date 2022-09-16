@@ -1,26 +1,20 @@
 INSERT INTO department (name)
-VALUES ('Sales'),
-       ('Engineering'),
-       ('Finance'),
-       ('Legal'),
-       ('Service');
+VALUES ('Online Shopping'),
+       ('Sales Floor'),
+       ('Stocking');
 
 INSERT INTO role (title, salary, department_id)
-VALUES ('Sales Lead', 100000, 1),
-       ('Salesperson', 80000, 1),
-       ('Lead Engineer', 150000, 2),
-       ('Software Engineer', 120000, 2),
-       ('Account Manager', 160000, 3),
-       ('Accountant', 125000, 3),
-       ('Legal Team Lead', 250000, 4),
-       ('Lawyer', 190000, 4);
+VALUES ('OSD Team Lead', 100000, 1),
+       ('Dispenser', 80000, 1),
+       ('Sales Lead', 150000, 2),
+       ('Cashier', 120000, 2),
+       ('Stock Manager', 160000, 3),
+       ('Team Member', 125000, 3);
 
 INSERT INTO employee (first_name, last_name, role_id, manager_id)
-VALUES ('John', 'Doe', 1, null),
-       ('Mike', 'Chan', 2, 1),
-       ('Ashley', 'Rodriguez', 3, null),
-       ('Kevin', 'Tupik', 4, 3),
-       ('Kunal', 'Singh', 5, null),
-       ('Malia', 'Brown', 6, 5),
-       ('Sarah', 'Lourd', 7, null),
-       ('Tom', 'Allen', 8, 7);
+VALUES ('Brittany', 'Ortega', 1, null),
+       ('Andru', 'Grad', 2, 1),
+       ('Lexxi', 'Mendez', 3, null),
+       ('Clyde', 'Rodriguez', 4, 3),
+       ('Jesus', 'Villarreal', 5, null),
+       ('Diego', 'Ochoa', 6, 5);
