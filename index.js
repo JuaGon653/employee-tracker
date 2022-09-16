@@ -15,7 +15,7 @@ const db = mysql.createConnection(
 // starts off running the 'whatAreWeDoing' function
 whatAreWeDoing();
 
-// 
+// prompts the user for the next thing to do
 function whatAreWeDoing() {
     // gives list of options
     inquirer
